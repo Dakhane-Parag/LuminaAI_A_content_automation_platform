@@ -71,6 +71,11 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = "gemini-2.5-flash"  # Model to use for content generation
 
     # ----------------------------------------------------------
+    # Replicate AI (Image Generation)
+    # ----------------------------------------------------------
+    REPLICATE_API_TOKEN: str = ""     # Required for image generation routes (set this in .env)
+
+    # ----------------------------------------------------------
     # Derived helpers
     # ----------------------------------------------------------
     @property

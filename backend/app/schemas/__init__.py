@@ -8,6 +8,7 @@ from app.schemas.ai_schema import (
     GeneratePostRequest,
     RawAIPost,
 )
+from app.schemas.image_schema import ImageGenerateResponse
 from app.schemas.post import (
     DeleteResponse,
     PostCreate,
@@ -44,9 +45,11 @@ __all__ = [
     "PostSuccessResponse",
     "PostListResponse",
     "DeleteResponse",
-    # AI schemas
+    # AI text schemas
     "GeneratePostRequest",
     "RawAIPost",
     "GeneratedPostVariant",
     "AIGenerateResponse",
+    # AI image schemas
+    "ImageGenerateResponse",
 ]

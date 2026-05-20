@@ -25,7 +25,7 @@ from pydantic import BaseModel, Field, field_validator
 # ---------------------------------------------------------------------------
 # Valid choice constants (for field validators)
 # ---------------------------------------------------------------------------
-VALID_STATUSES       = {"draft", "scheduled", "published"}
+VALID_STATUSES       = {"draft", "scheduled", "published", "ready"}
 VALID_DESIGN_STYLES  = {"luxury", "minimal", "startup", "bold", "elegant", "modern", "retro"}
 VALID_TONES          = {"viral", "professional", "educational", "humorous", "inspirational", "casual"}
 

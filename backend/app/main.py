@@ -17,11 +17,13 @@ Architecture overview:
 """
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config.settings import settings
 from app.database.connection import db_manager
@@ -87,6 +89,17 @@ def create_application() -> FastAPI:
     # ── Routers ───────────────────────────────────────────────────────────
 
     application.include_router(api_router, prefix=settings.API_V1_PREFIX)
+
+    # ── Static Files (generated images) ──────────────────────────────────
+    # Serves generated images at /generated_images/<filename>
+    # This allows the frontend to display images via a direct URL.
+    images_dir = Path(__file__).resolve().parent.parent / "generated_images"
+    images_dir.mkdir(parents=True, exist_ok=True)
+    application.mount(
+        "/generated_images",
+        StaticFiles(directory=str(images_dir)),
+        name="generated_images",
+    )
 
     # ── Root endpoint ─────────────────────────────────────────────────────
 

@@ -28,8 +28,9 @@ class PostStatus:
     DRAFT      = "draft"
     SCHEDULED  = "scheduled"
     PUBLISHED  = "published"
+    READY      = "ready"
 
-    ALL_VALUES = {DRAFT, SCHEDULED, PUBLISHED}
+    ALL_VALUES = {DRAFT, SCHEDULED, PUBLISHED, READY}
 
 
 # ---------------------------------------------------------------------------

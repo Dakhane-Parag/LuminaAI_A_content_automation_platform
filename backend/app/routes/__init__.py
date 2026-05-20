@@ -8,6 +8,7 @@ Registered routers:
     /health     — App liveness and DB connectivity checks
     /posts      — Post CRUD (create / read / update / delete)
     /ai         — AI content generation workflows
+    /images     — AI image generation workflows
 """
 
 from fastapi import APIRouter
@@ -15,6 +16,7 @@ from fastapi import APIRouter
 from app.routes.ai_routes import router as ai_router
 from app.routes.auth import router as auth_router
 from app.routes.health import router as health_router
+from app.routes.image_routes import router as image_router
 from app.routes.post_routes import router as posts_router
 
 # Root API router — all routes are nested under this
@@ -24,5 +26,6 @@ api_router.include_router(auth_router)
 api_router.include_router(health_router)
 api_router.include_router(posts_router)
 api_router.include_router(ai_router)
+api_router.include_router(image_router)
 
 __all__ = ["api_router"]
