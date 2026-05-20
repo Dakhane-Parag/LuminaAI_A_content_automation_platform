@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     This replaces the deprecated @app.on_event("startup") pattern.
     """
     # ── Startup ──────────────────────────────────────────────────────────
-    print(f"🚀 Starting {settings.APP_NAME} v{settings.APP_VERSION}")
+    print(f"[*] Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     print(f"   Environment : {settings.ENVIRONMENT}")
     print(f"   Debug mode  : {settings.DEBUG}")
 
@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield  # Application is now live and handling requests
 
     # ── Shutdown ─────────────────────────────────────────────────────────
-    print(f"🛑 Shutting down {settings.APP_NAME}...")
+    print(f"[-] Shutting down {settings.APP_NAME}...")
     await db_manager.disconnect()
 
 

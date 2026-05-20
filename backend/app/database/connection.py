@@ -78,6 +78,23 @@ class DatabaseManager:
             name="email_unique_idx",
         )
 
+        # Posts collection indexes
+        # Compound index: fetching all posts for a user sorted by date is the
+        # hottest query path — this index makes it O(log n) rather than a
+        # full collection scan.
+        await self.db.posts.create_index(
+            [("user_id", ASCENDING), ("created_at", ASCENDING)],
+            background=True,
+            name="posts_user_date_idx",
+        )
+
+        # Secondary index to speed up status-filtered list queries
+        await self.db.posts.create_index(
+            [("user_id", ASCENDING), ("status", ASCENDING)],
+            background=True,
+            name="posts_user_status_idx",
+        )
+
         print("MongoDB indexes verified/created.")
 
     def get_db(self) -> motor.motor_asyncio.AsyncIOMotorDatabase:

@@ -2,6 +2,14 @@
 Brandflow AI - Schemas Package
 """
 
+from app.schemas.post import (
+    DeleteResponse,
+    PostCreate,
+    PostListResponse,
+    PostResponse,
+    PostSuccessResponse,
+    PostUpdate,
+)
 from app.schemas.user import (
     ErrorResponse,
     MessageResponse,
@@ -14,6 +22,7 @@ from app.schemas.user import (
 )
 
 __all__ = [
+    # User schemas
     "UserBase",
     "UserCreate",
     "UserLogin",
@@ -22,4 +31,11 @@ __all__ = [
     "TokenPayload",
     "MessageResponse",
     "ErrorResponse",
+    # Post schemas
+    "PostCreate",
+    "PostUpdate",
+    "PostResponse",
+    "PostSuccessResponse",
+    "PostListResponse",
+    "DeleteResponse",
 ]
