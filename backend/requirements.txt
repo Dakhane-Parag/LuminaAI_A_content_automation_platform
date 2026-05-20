@@ -38,3 +38,6 @@ google-generativeai==0.8.5
 
 # AI / Replicate (Image Generation)
 replicate==1.0.4
+
+# Cloud Storage / Amazon S3
+boto3==1.38.18

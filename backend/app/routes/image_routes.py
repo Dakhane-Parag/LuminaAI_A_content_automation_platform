@@ -60,22 +60,24 @@ async def generate_image_for_post(
     db: AsyncIOMotorDatabase = Depends(get_database),
 ) -> ImageGenerateResponse:
     """
-    Generate a cinematic AI image for an existing post draft using Replicate FLUX.
+    Generate a cinematic AI image for an existing post draft using Pollinations AI,
+    then upload it to Amazon S3 for production cloud storage.
 
     **Workflow:**
     1. Fetches the selected post draft from MongoDB (validates ownership).
     2. Builds a high-quality cinematic image prompt using the post's `caption`,
        `tone`, and `design_style`.
-    3. Sends the prompt to the **Replicate FLUX Schnell** model.
-    4. Downloads the generated image and saves it to `generated_images/`.
-    5. Updates the post's `image_url` and `status` → `"ready"` in MongoDB.
-    6. Returns the local image URL for immediate frontend use.
+    3. Downloads the AI-generated image as a local temp file.
+    4. Uploads the temp file to **Amazon S3** and retrieves a public URL.
+    5. Cleans up the local temp file automatically.
+    6. Updates the post's `image_url` (S3 URL) and `status` → `"ready"` in MongoDB.
+    7. Returns the permanent cloud image URL for frontend use.
 
     **Use this endpoint AFTER** generating text drafts via
     `POST /api/v1/ai/generate-posts` and selecting your preferred variation.
 
-    **Note:** Images are currently stored locally. S3 integration will be
-    added in Stair 9.
+    **Note:** Falls back to local static storage in development mode if
+    AWS credentials are not configured in `.env`.
     """
     user_id = str(current_user.id)
 
@@ -91,8 +93,9 @@ async def generate_image_for_post(
 
     # ── Step 2 & 3 & 4: Generate image + save locally ─────────────────────
     try:
-        local_image_url = await ImageAIService.generate_and_save(
+        image_url = await ImageAIService.generate_and_save(
             post_id=post_id,
+            user_id=user_id,
             caption=post.caption,
             tone=post.tone,
             design_style=post.design_style,
@@ -110,19 +113,19 @@ async def generate_image_for_post(
         db=db,
         post_id=post_id,
         update_data=PostUpdate(
-            image_url=local_image_url,
+            image_url=image_url,
             status="ready",
         ),
         user_id=user_id,
     )
 
-    logger.info(f"Post {post_id} updated with image_url={local_image_url}")
+    logger.info(f"Post {post_id} updated with image_url={image_url}")
 
     # ── Step 6: Return response ────────────────────────────────────────────
     return ImageGenerateResponse(
         success=True,
         message="Image generated and saved successfully.",
         post_id=post_id,
-        image_url=local_image_url,
+        image_url=image_url,
         status="ready",
     )

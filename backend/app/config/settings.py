@@ -76,6 +76,14 @@ class Settings(BaseSettings):
     REPLICATE_API_TOKEN: str = ""     # Required for image generation routes (set this in .env)
 
     # ----------------------------------------------------------
+    # Amazon S3 (Cloud Image Storage)
+    # ----------------------------------------------------------
+    AWS_ACCESS_KEY_ID: str = ""       # AWS IAM access key (set this in .env)
+    AWS_SECRET_ACCESS_KEY: str = ""   # AWS IAM secret key (set this in .env)
+    AWS_REGION: str = "eu-north-1"    # S3 bucket region
+    AWS_BUCKET_NAME: str = ""         # S3 bucket name (set this in .env)
+
+    # ----------------------------------------------------------
     # Derived helpers
     # ----------------------------------------------------------
     @property
