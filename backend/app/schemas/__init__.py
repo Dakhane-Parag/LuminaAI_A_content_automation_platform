@@ -2,6 +2,12 @@
 Brandflow AI - Schemas Package
 """
 
+from app.schemas.ai_schema import (
+    AIGenerateResponse,
+    GeneratedPostVariant,
+    GeneratePostRequest,
+    RawAIPost,
+)
 from app.schemas.post import (
     DeleteResponse,
     PostCreate,
@@ -38,4 +44,9 @@ __all__ = [
     "PostSuccessResponse",
     "PostListResponse",
     "DeleteResponse",
+    # AI schemas
+    "GeneratePostRequest",
+    "RawAIPost",
+    "GeneratedPostVariant",
+    "AIGenerateResponse",
 ]

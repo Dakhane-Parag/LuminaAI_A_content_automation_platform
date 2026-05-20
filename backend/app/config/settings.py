@@ -65,6 +65,12 @@ class Settings(BaseSettings):
     BCRYPT_ROUNDS: int = 12
 
     # ----------------------------------------------------------
+    # Gemini AI
+    # ----------------------------------------------------------
+    GEMINI_API_KEY: str = ""          # Required for AI generation routes (set this in .env)
+    GEMINI_MODEL: str = "gemini-2.5-flash"  # Model to use for content generation
+
+    # ----------------------------------------------------------
     # Derived helpers
     # ----------------------------------------------------------
     @property
