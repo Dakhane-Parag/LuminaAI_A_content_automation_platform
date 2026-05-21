@@ -29,8 +29,11 @@ class PostStatus:
     SCHEDULED  = "scheduled"
     PUBLISHED  = "published"
     READY      = "ready"
+    EXECUTED   = "executed"
+    FAILED     = "failed"
+    CANCELLED  = "cancelled"
 
-    ALL_VALUES = {DRAFT, SCHEDULED, PUBLISHED, READY}
+    ALL_VALUES = {DRAFT, SCHEDULED, PUBLISHED, READY, EXECUTED, FAILED, CANCELLED}
 
 
 # ---------------------------------------------------------------------------

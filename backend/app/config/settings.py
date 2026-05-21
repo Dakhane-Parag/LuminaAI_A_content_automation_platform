@@ -84,12 +84,24 @@ class Settings(BaseSettings):
     AWS_BUCKET_NAME: str = ""         # S3 bucket name (set this in .env)
 
     # ----------------------------------------------------------
+    # Redis (Celery Broker & Task Queue)
+    # ----------------------------------------------------------
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
+
+    # ----------------------------------------------------------
     # Derived helpers
     # ----------------------------------------------------------
     @property
     def allowed_origins_list(self) -> List[str]:
         """Parse comma-separated ALLOWED_ORIGINS into a Python list."""
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
+
+    @property
+    def redis_url(self) -> str:
+        """Full Redis URL for Celery broker/backend."""
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
     @property
     def is_production(self) -> bool:

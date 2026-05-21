@@ -41,3 +41,8 @@ replicate==1.0.4
 
 # Cloud Storage / Amazon S3
 boto3==1.38.18
+
+# Task Queue / Background Processing
+celery==5.4.0
+redis==5.2.1
+kombu==5.4.2
