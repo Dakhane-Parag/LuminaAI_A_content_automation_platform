@@ -18,6 +18,7 @@ IMPORTANT:
 """
 
 import logging
+import time
 from datetime import datetime, timezone
 
 import certifi
@@ -107,6 +108,8 @@ def execute_scheduled_post(self, schedule_id: str, post_id: str, user_id: str) -
         f"schedule_id={schedule_id} post_id={post_id} user_id={user_id}"
     )
 
+    task_start_time = time.time()  # track wall-clock time for analytics
+
     try:
         db = _get_sync_db()
 
@@ -132,6 +135,19 @@ def execute_scheduled_post(self, schedule_id: str, post_id: str, user_id: str) -
             schedule_id=schedule_id,
             post_id=post_id,
             user_id=user_id,
+        )
+
+        # ── Analytics: log successful worker execution ───────────────────────
+        from app.services.analytics_service import AnalyticsService
+        exec_ms = int((time.time() - task_start_time) * 1000)
+        AnalyticsService.log_worker_event_sync(
+            user_id=user_id,
+            task_name="workers.tasks.scheduler_tasks.execute_scheduled_post",
+            schedule_id=schedule_id,
+            post_id=post_id,
+            status=result.get("status", "success"),
+            retry_count=self.request.retries,
+            execution_time_ms=exec_ms,
         )
 
         logger.info(f"[Celery] ✅ Scheduled task completed: {result}")

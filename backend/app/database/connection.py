@@ -95,6 +95,51 @@ class DatabaseManager:
             name="posts_user_status_idx",
         )
 
+        # ── Analytics Collections ──────────────────────────────────────────
+
+        # generation_logs — compound index for user-scoped time queries
+        await self.db.generation_logs.create_index(
+            [("user_id", ASCENDING), ("created_at", ASCENDING)],
+            background=True,
+            name="gen_logs_user_date_idx",
+        )
+
+        # publish_logs — multiple indexes for different query patterns
+        await self.db.publish_logs.create_index(
+            [("user_id", ASCENDING), ("created_at", ASCENDING)],
+            background=True,
+            name="pub_logs_user_date_idx",
+        )
+        await self.db.publish_logs.create_index(
+            [("post_id", ASCENDING)],
+            background=True,
+            name="pub_logs_post_idx",
+        )
+        await self.db.publish_logs.create_index(
+            [("status", ASCENDING), ("created_at", ASCENDING)],
+            background=True,
+            name="pub_logs_status_date_idx",
+        )
+
+        # worker_logs — compound indexes for user + time queries
+        await self.db.worker_logs.create_index(
+            [("user_id", ASCENDING), ("executed_at", ASCENDING)],
+            background=True,
+            name="worker_logs_user_date_idx",
+        )
+        await self.db.worker_logs.create_index(
+            [("status", ASCENDING), ("executed_at", ASCENDING)],
+            background=True,
+            name="worker_logs_status_date_idx",
+        )
+
+        # user_activity — fast feed queries sorted by created_at desc
+        await self.db.user_activity.create_index(
+            [("user_id", ASCENDING), ("created_at", ASCENDING)],
+            background=True,
+            name="activity_user_date_idx",
+        )
+
         print("MongoDB indexes verified/created.")
 
     def get_db(self) -> motor.motor_asyncio.AsyncIOMotorDatabase:

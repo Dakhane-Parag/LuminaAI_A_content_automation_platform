@@ -19,6 +19,7 @@ Architecture:
 
 import logging
 import os
+import time
 from datetime import datetime, timezone
 
 import certifi
@@ -27,6 +28,7 @@ from bson import ObjectId
 from celery import Task
 from celery.utils.log import get_task_logger
 
+from app.services.analytics_service import AnalyticsService
 from app.services.instagram_service import InstagramAPIError, InstagramService
 from workers.celery_worker import celery_app
 
@@ -104,6 +106,7 @@ def publish_to_instagram(
 
     db = _get_sync_db()
     now = datetime.now(timezone.utc)
+    task_start_time = time.time()  # Track execution time for analytics
 
     # ── Step 1: Fetch post document ────────────────────────────────────
     post_doc = db.posts.find_one({"_id": ObjectId(post_id)})
@@ -187,6 +190,20 @@ def publish_to_instagram(
                 {"$set": {"instagram_connected": False}},
             )
             _mark_failed(db, schedule_id, post_id, error_msg)
+
+            # — Analytics: log publish failure —
+            exec_time_ms = int((time.time() - task_start_time) * 1000)
+            AnalyticsService.log_publish_event_sync(
+                user_id=user_id, post_id=post_id, schedule_id=schedule_id,
+                status="failed", error_message=error_msg, execution_time_ms=exec_time_ms,
+            )
+            AnalyticsService.log_activity_event_sync(
+                user_id=user_id, event_type="post_failed",
+                title="Instagram Publish Failed — Token Expired",
+                description="Reconnect your Instagram account to resume posting.",
+                post_id=post_id, schedule_id=schedule_id,
+                metadata={"platform": "instagram", "error": error_msg},
+            )
             return {"status": "failed", "reason": "token expired"}
 
         # Rate limit (code 32, 4) — retry after delay
@@ -225,6 +242,31 @@ def publish_to_instagram(
                 "status": "executed",
                 "executed_at": published_at,
             }
+        },
+    )
+
+    # ── Step 8: Analytics — log publish success ───────────────────────────────
+    exec_time_ms = int((time.time() - task_start_time) * 1000)
+    AnalyticsService.log_publish_event_sync(
+        user_id=user_id,
+        post_id=post_id,
+        schedule_id=schedule_id,
+        status="success",
+        instagram_post_id=instagram_post_id,
+        execution_time_ms=exec_time_ms,
+        published_at=published_at,
+    )
+    AnalyticsService.log_activity_event_sync(
+        user_id=user_id,
+        event_type="post_published",
+        title="Post Published to Instagram ✅",
+        description=f"Auto-published via Brandflow AI automation pipeline.",
+        post_id=post_id,
+        schedule_id=schedule_id,
+        metadata={
+            "platform": "instagram",
+            "instagram_post_id": instagram_post_id,
+            "execution_time_ms": exec_time_ms,
         },
     )
 

@@ -8,6 +8,15 @@ from app.schemas.ai_schema import (
     GeneratePostRequest,
     RawAIPost,
 )
+from app.schemas.analytics_schema import (
+    AnalyticsOverviewResponse,
+    GenerationAnalyticsResponse,
+    PostStatsResponse,
+    PublishStatsResponse,
+    RecentActivityItem,
+    UserActivityResponse,
+    WorkerHealthResponse,
+)
 from app.schemas.image_schema import ImageGenerateResponse
 from app.schemas.post import (
     DeleteResponse,
@@ -52,4 +61,12 @@ __all__ = [
     "AIGenerateResponse",
     # AI image schemas
     "ImageGenerateResponse",
+    # Analytics schemas
+    "AnalyticsOverviewResponse",
+    "PostStatsResponse",
+    "GenerationAnalyticsResponse",
+    "PublishStatsResponse",
+    "WorkerHealthResponse",
+    "UserActivityResponse",
+    "RecentActivityItem",
 ]

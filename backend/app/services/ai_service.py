@@ -23,6 +23,7 @@ Architecture position:
 import json
 import logging
 import re
+import time
 from typing import List, Optional
 
 import google.generativeai as genai
@@ -274,8 +275,9 @@ class AIService:
                 detail="AI service is not configured. Please contact support.",
             )
 
-        # ── Step 1: Build prompt ──────────────────────────────────────────
+        # ── Step 1: Build prompt ──────────────────────────────────────
         prompt = _build_system_prompt(request.prompt, request.variations)
+        gen_start_time = time.time()  # Track generation time for analytics
 
         # ── Step 2: Call Gemini API ───────────────────────────────────────
         try:
@@ -297,6 +299,15 @@ class AIService:
             raise  # re-raise our own exceptions unchanged
         except Exception as e:
             logger.error(f"Gemini API call failed: {e}")
+            # — Analytics: log generation failure —
+            gen_duration_ms = int((time.time() - gen_start_time) * 1000)
+            from app.services.analytics_service import AnalyticsService
+            await AnalyticsService.log_generation_event_async(
+                db=db, user_id=user_id, post_id=None,
+                prompt=request.prompt, status="failed",
+                duration_ms=gen_duration_ms, model=settings.GEMINI_MODEL,
+                error_message=str(e)[:500],
+            )
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail=f"AI service is temporarily unavailable. Please try again. ({type(e).__name__})",
@@ -363,6 +374,25 @@ class AIService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="AI generated content but could not save any drafts. Please try again.",
             )
+
+        # ── Analytics: log successful generation ──────────────────────────
+        gen_duration_ms = int((time.time() - gen_start_time) * 1000)
+        first_post_id = saved_variants[0].id if saved_variants else None
+        from app.services.analytics_service import AnalyticsService
+        await AnalyticsService.log_generation_event_async(
+            db=db, user_id=user_id,
+            post_id=str(first_post_id) if first_post_id else None,
+            prompt=request.prompt, status="success",
+            duration_ms=gen_duration_ms, model=settings.GEMINI_MODEL,
+        )
+        await AnalyticsService.log_activity_event_async(
+            db=db, user_id=user_id,
+            event_type="post_generated",
+            title=f"AI Generated {len(saved_variants)} Post Variant(s)",
+            description=f"Prompt: {request.prompt[:80]}{'...' if len(request.prompt) > 80 else ''}",
+            post_id=str(first_post_id) if first_post_id else None,
+            metadata={"count": len(saved_variants), "model": settings.GEMINI_MODEL},
+        )
 
         logger.info(
             f"Generated and saved {len(saved_variants)} drafts for user {user_id}."

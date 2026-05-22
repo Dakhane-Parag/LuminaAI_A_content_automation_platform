@@ -50,4 +50,5 @@ logs/
 *.temp
 cli_oauth.py
 inject_token.py
+migrate_analytics.py
 META_SETUP_GUIDE.md
