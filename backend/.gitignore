@@ -48,3 +48,6 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+cli_oauth.py
+inject_token.py
+META_SETUP_GUIDE.md

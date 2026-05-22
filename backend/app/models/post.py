@@ -25,15 +25,16 @@ from app.models.user import PyObjectId  # reuse the shared ObjectId bridge
 # ---------------------------------------------------------------------------
 class PostStatus:
     """Valid values for the Post.status field."""
-    DRAFT      = "draft"
-    SCHEDULED  = "scheduled"
-    PUBLISHED  = "published"
-    READY      = "ready"
-    EXECUTED   = "executed"
-    FAILED     = "failed"
-    CANCELLED  = "cancelled"
+    DRAFT       = "draft"
+    SCHEDULED   = "scheduled"
+    PUBLISHED   = "published"
+    READY       = "ready"
+    EXECUTING   = "publishing"   # actively being sent to Instagram
+    EXECUTED    = "executed"
+    FAILED      = "failed"
+    CANCELLED   = "cancelled"
 
-    ALL_VALUES = {DRAFT, SCHEDULED, PUBLISHED, READY, EXECUTED, FAILED, CANCELLED}
+    ALL_VALUES = {DRAFT, SCHEDULED, PUBLISHED, READY, EXECUTING, EXECUTED, FAILED, CANCELLED}
 
 
 # ---------------------------------------------------------------------------
@@ -77,6 +78,10 @@ class PostDocument(BaseModel):
     status: str = PostStatus.DRAFT
     image_url: Optional[str] = None
     scheduled_time: Optional[datetime] = None
+
+    # Publishing results (set after Instagram publishes)
+    published_at: Optional[datetime] = None
+    instagram_post_id: Optional[str] = None   # The media ID returned by Meta Graph API
 
     # Timestamps
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

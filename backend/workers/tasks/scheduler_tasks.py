@@ -6,13 +6,9 @@ Celery tasks for the scheduled post automation workflow.
 These tasks run inside the Celery worker process (separate from FastAPI).
 They are triggered by ScheduleService.apply_async(eta=scheduled_time).
 
-Task architecture:
-    execute_scheduled_post  — main automation task (triggered at scheduled time)
-    mark_schedule_failed    — helper to handle failure recording
-
-For Stair 10:
-    The task simulates automation by updating MongoDB status to "executed".
-    Instagram posting will be added in Stair 11.
+Stair 11:
+    execute_scheduled_post now delegates to publish_to_instagram
+    which handles the full Meta Graph API publishing pipeline.
 
 IMPORTANT:
     - Tasks use a synchronous pymongo client (not Motor) because Celery
@@ -113,46 +109,33 @@ def execute_scheduled_post(self, schedule_id: str, post_id: str, user_id: str) -
 
     try:
         db = _get_sync_db()
-        now = datetime.now(timezone.utc)
 
-        # ── Step 1: Update schedule status → executed ─────────────────
-        schedule_update = db.scheduled_posts.update_one(
-            {"_id": ObjectId(schedule_id)},
-            {
-                "$set": {
-                    "status": "executed",
-                    "executed_at": now,
-                }
-            },
-        )
-
-        if schedule_update.matched_count == 0:
-            logger.warning(f"[Celery] Schedule {schedule_id} not found in DB — may have been cancelled.")
+        # ── Check if schedule was cancelled ────────────────────────────
+        schedule_doc = db.scheduled_posts.find_one({"_id": ObjectId(schedule_id)})
+        if not schedule_doc:
+            logger.warning(f"[Celery] Schedule {schedule_id} not found — may have been cancelled.")
             return {"status": "skipped", "reason": "schedule not found"}
 
-        # ── Step 2: Update post status → executed ─────────────────────
-        # (Stair 11 will change this to 'published' after Instagram posts)
-        db.posts.update_one(
-            {"_id": ObjectId(post_id)},
-            {
-                "$set": {
-                    "status": "executed",
-                    "updated_at": now,
-                }
-            },
+        if schedule_doc.get("status") == "cancelled":
+            logger.info(f"[Celery] Schedule {schedule_id} was cancelled — skipping.")
+            return {"status": "skipped", "reason": "schedule cancelled"}
+
+        # ── Delegate to Instagram publish task ─────────────────────────
+        # Import here to avoid circular imports at module load time
+        from workers.tasks.instagram_tasks import publish_to_instagram
+
+        logger.info(f"[Celery] Delegating to Instagram publish task for post {post_id}")
+
+        # Call synchronously within the same worker process
+        # (apply() runs the task inline without dispatching to queue)
+        result = publish_to_instagram(
+            schedule_id=schedule_id,
+            post_id=post_id,
+            user_id=user_id,
         )
 
-        logger.info(
-            f"[Celery] ✅ Scheduled task completed successfully. "
-            f"schedule_id={schedule_id} post_id={post_id}"
-        )
-
-        return {
-            "status": "executed",
-            "schedule_id": schedule_id,
-            "post_id": post_id,
-            "executed_at": now.isoformat(),
-        }
+        logger.info(f"[Celery] ✅ Scheduled task completed: {result}")
+        return result
 
     except Exception as exc:
         logger.error(
@@ -163,23 +146,23 @@ def execute_scheduled_post(self, schedule_id: str, post_id: str, user_id: str) -
         # Mark the schedule as failed in MongoDB
         try:
             db = _get_sync_db()
+            now = datetime.now(timezone.utc)
             db.scheduled_posts.update_one(
                 {"_id": ObjectId(schedule_id)},
                 {
                     "$set": {
                         "status": "failed",
                         "error_message": str(exc),
-                        "executed_at": datetime.now(timezone.utc),
+                        "executed_at": now,
                     }
                 },
             )
-            # Mark post as failed too
             db.posts.update_one(
                 {"_id": ObjectId(post_id)},
-                {"$set": {"status": "failed", "updated_at": datetime.now(timezone.utc)}},
+                {"$set": {"status": "failed", "updated_at": now}},
             )
         except Exception as db_err:
             logger.error(f"[Celery] Could not update failure status in DB: {db_err}")
 
-        # Retry the task with exponential back-off
+        # Retry with exponential back-off
         raise self.retry(exc=exc, countdown=60 * (self.request.retries + 1))

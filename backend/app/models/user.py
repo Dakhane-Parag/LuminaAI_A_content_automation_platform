@@ -64,6 +64,16 @@ class UserDocument(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+    # ------------------------------------------------------------------
+    # Social Account Connections (extensible for LinkedIn, TikTok, etc.)
+    # ------------------------------------------------------------------
+    # Instagram / Meta
+    instagram_connected: bool = False
+    instagram_access_token: Optional[str] = None   # Long-lived token — NEVER returned in API responses
+    facebook_page_id: Optional[str] = None          # Facebook Page ID linked to Instagram
+    instagram_business_id: Optional[str] = None     # Instagram Business Account ID
+    token_created_at: Optional[datetime] = None     # When the token was last refreshed
+
     model_config = {
         # Allow population by field name AND alias (_id)
         "populate_by_name": True,

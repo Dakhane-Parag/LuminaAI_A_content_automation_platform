@@ -91,6 +91,12 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
 
     # ----------------------------------------------------------
+    # Meta / Instagram (Graph API)
+    # ----------------------------------------------------------
+    META_APP_ID: str = ""        # From Meta App Dashboard (App ID)
+    META_APP_SECRET: str = ""    # From Meta App Dashboard (App Secret)
+
+    # ----------------------------------------------------------
     # Derived helpers
     # ----------------------------------------------------------
     @property

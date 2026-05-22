@@ -10,6 +10,7 @@ Registered routers:
     /ai         — AI content generation workflows
     /images     — AI image generation workflows
     /schedule   — Post scheduling and automation workflows
+    /oauth      — Instagram OAuth and social account connection
 """
 
 from fastapi import APIRouter
@@ -18,6 +19,7 @@ from app.routes.ai_routes import router as ai_router
 from app.routes.auth import router as auth_router
 from app.routes.health import router as health_router
 from app.routes.image_routes import router as image_router
+from app.routes.oauth_routes import router as oauth_router
 from app.routes.post_routes import router as posts_router
 from app.routes.schedule_routes import router as schedule_router
 
@@ -30,5 +32,6 @@ api_router.include_router(posts_router)
 api_router.include_router(ai_router)
 api_router.include_router(image_router)
 api_router.include_router(schedule_router)
+api_router.include_router(oauth_router)
 
 __all__ = ["api_router"]

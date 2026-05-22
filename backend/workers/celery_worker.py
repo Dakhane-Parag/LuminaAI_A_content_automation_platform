@@ -25,6 +25,10 @@ Monitoring (optional — install flower first):
 """
 
 import os
+from dotenv import load_dotenv
+
+# Load environment variables before Celery initializes
+load_dotenv()
 
 from celery import Celery
 from celery.utils.log import get_task_logger
@@ -48,6 +52,7 @@ celery_app = Celery(
     backend=REDIS_URL,       # Redis as the result store
     include=[
         "workers.tasks.scheduler_tasks",   # auto-register scheduling tasks
+        "workers.tasks.instagram_tasks",   # auto-register Instagram publishing tasks
     ],
 )
 
