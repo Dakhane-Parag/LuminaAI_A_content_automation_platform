@@ -124,3 +124,28 @@ async def get_me(
     Requires a valid JWT Bearer token in the Authorization header.
     """
     return UserService.to_response(current_user)
+
+
+# ---------------------------------------------------------------------------
+# POST /logout
+# ---------------------------------------------------------------------------
+@router.post(
+    "/logout",
+    response_model=MessageResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Logout the user",
+    responses={
+        200: {"description": "Successfully logged out"},
+        401: {"description": "Missing or invalid JWT token"},
+    },
+)
+async def logout(
+    current_user: UserDocument = Depends(get_current_active_user),
+) -> MessageResponse:
+    """
+    Logout the currently authenticated user.
+
+    Note: Since we use stateless JWTs, this endpoint doesn't invalidate the token on the server.
+    The frontend client MUST delete the access token from its local storage or cookies to properly log out.
+    """
+    return MessageResponse(message="Successfully logged out. Please clear the token from client storage.")
