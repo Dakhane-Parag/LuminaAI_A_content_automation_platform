@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import bgImage from '../assets/screen.png'
 
 // ── Small icon components (using SVG so no extra dep needed) ──────────────────
 const Icon = ({ path, size = 20 }) => (
@@ -100,7 +101,7 @@ export default function RegisterPage() {
     setApiError('')
     try {
       await register({
-        full_name: form.full_name,
+        name: form.full_name,
         email: form.email,
         password: form.password,
       })
@@ -124,7 +125,7 @@ export default function RegisterPage() {
           <img
             alt="BrandFlow AI Visual"
             className="w-full h-full object-cover"
-            src="https://lh3.googleusercontent.com/aida/ADBb0uieJgOijx3y7uFNc3uZ0RLjiAzp9_Qixad8oSyrNm15awZM-FRWbXwP60fVFZJHrmX4tdyuPLIK54ZMw83g1um8vInXqYlUCUYxoPwN6c6SKm-tQgQzjaDLsl8DusKbKlQW6bP5l8vq1FDl39Vwa-GIodjCGi2AUw8cug2UtH24ZzmhbWw9IiqpWcqXopwj53q8v7qJjUXOjfTvXYaz3dBWXCHbeJrVmH4nBNvO48wQc9KC2x_r2eDUuDY"
+            src={bgImage}
           />
           {/* Overlays */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent" />

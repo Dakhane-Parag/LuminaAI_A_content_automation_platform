@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import bgImage from '../assets/screen.png'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -54,7 +55,7 @@ export default function LoginPage() {
             alt="Cinematic AI Visualization"
             className="w-full h-full object-cover opacity-60 transition-transform duration-100 ease-out"
             style={{ transform: 'scale(1.05)' }}
-            src="https://lh3.googleusercontent.com/aida/ADBb0uieJgOijx3y7uFNc3uZ0RLjiAzp9_Qixad8oSyrNm15awZM-FRWbXwP60fVFZJHrmX4tdyuPLIK54ZMw83g1um8vInXqYlUCUYxoPwN6c6SKm-tQgQzjaDLsl8DusKbKlQW6bP5l8vq1FDl39Vwa-GIodjCGi2AUw8cug2UtH24ZzmhbWw9IiqpWcqXopwj53q8v7qJjUXOjfTvXYaz3dBWXCHbeJrVmH4nBNvO48wQc9KC2x_r2eDUuDY"
+            src={bgImage}
           />
           {/* Overlay gradients */}
           <div className="absolute inset-0 bg-gradient-to-tr from-[#050505] via-transparent to-[#3B82F6]/5" />
