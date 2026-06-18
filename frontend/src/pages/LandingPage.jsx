@@ -4,34 +4,34 @@ import { useState, useEffect } from 'react'
 // ── Reusable SVG Icons ────────────────────────────────────────────────────────
 const LightbulbIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/>
-    <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>
+    <line x1="9" y1="18" x2="15" y2="18" /><line x1="10" y1="22" x2="14" y2="22" />
+    <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
   </svg>
 )
 const SparklesIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
-    <path d="M5 3v4M19 17v4M3 5h4M17 19h4"/>
+    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    <path d="M5 3v4M19 17v4M3 5h4M17 19h4" />
   </svg>
 )
 const CalendarIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
   </svg>
 )
 const PublishIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+    <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />
   </svg>
 )
 const MenuIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+    <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
   </svg>
 )
 const CloseIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 )
 
@@ -94,20 +94,7 @@ export default function LandingPage() {
           <div className="text-xl font-bold tracking-tighter text-white">BrandFlow AI</div>
 
           {/* Desktop nav */}
-          <div className="hidden md:flex space-x-8 items-center">
-            {NAV_LINKS.map((link, i) => (
-              <a
-                key={link}
-                href="#"
-                className="text-sm uppercase tracking-wider font-medium transition-colors duration-150"
-                style={{ color: i === 0 ? '#EF4444' : '#e5e2e1', borderBottom: i === 0 ? '1px solid #EF4444' : 'none' }}
-                onMouseEnter={e => { if (i !== 0) e.target.style.color = '#EF4444' }}
-                onMouseLeave={e => { if (i !== 0) e.target.style.color = '#e5e2e1' }}
-              >
-                {link}
-              </a>
-            ))}
-          </div>
+
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">

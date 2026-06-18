@@ -39,6 +39,7 @@ from app.schemas.instagram_schema import (
     InstagramConnectResponse,
     InstagramStatusResponse,
     ManualTokenConnectRequest,
+    OAuthCodeRequest,
 )
 from app.services.instagram_service import InstagramAPIError, InstagramService
 
@@ -48,6 +49,210 @@ router = APIRouter(
     prefix="/oauth",
     tags=["OAuth & Social Connections"],
 )
+
+
+# ---------------------------------------------------------------------------
+# GET /oauth/instagram/connect-url
+# ---------------------------------------------------------------------------
+@router.get(
+    "/instagram/connect-url",
+    status_code=status.HTTP_200_OK,
+    summary="Get the Facebook OAuth URL to open in a popup",
+    responses={
+        200: {"description": "Facebook OAuth URL ready to open"},
+        503: {"description": "Meta App credentials not configured"},
+    },
+)
+async def get_instagram_connect_url(
+    current_user: UserDocument = Depends(get_current_active_user),
+) -> dict:
+    """
+    Returns the Facebook OAuth authorization URL.
+
+    The frontend opens this URL in a popup window. The user logs in with
+    Facebook, grants permissions, and is redirected back to the frontend
+    callback page which then calls POST /oauth/instagram/exchange-code.
+
+    Required Meta App Dashboard settings:
+        - Valid OAuth Redirect URI: http://localhost:5173/auth/instagram/callback
+        - Permissions: instagram_basic, instagram_content_publish,
+          pages_manage_metadata, pages_read_engagement, pages_show_list
+    """
+    if not settings.META_APP_ID or not settings.META_REDIRECT_URI:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="META_APP_ID and META_REDIRECT_URI must be configured in .env",
+        )
+
+    params = {
+        "client_id": settings.META_APP_ID,
+        "redirect_uri": settings.META_REDIRECT_URI,
+        "scope": (
+            "instagram_basic,"
+            "instagram_content_publish,"
+            "pages_manage_metadata,"
+            "pages_read_engagement,"
+            "pages_show_list"
+        ),
+        "response_type": "code",
+        "state": str(current_user.id),  # passed through for traceability
+    }
+    auth_url = "https://www.facebook.com/v21.0/dialog/oauth?" + urlencode(params)
+    logger.info(f"[OAuth] Generated connect URL for user {current_user.id}")
+    return {"auth_url": auth_url}
+
+
+# ---------------------------------------------------------------------------
+# POST /oauth/instagram/exchange-code
+# ---------------------------------------------------------------------------
+@router.post(
+    "/instagram/exchange-code",
+    response_model=InstagramConnectResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Exchange OAuth code → auto-discover & save Instagram account",
+    responses={
+        200: {"description": "Instagram account connected automatically"},
+        400: {"description": "Code exchange or account discovery failed"},
+        503: {"description": "Meta App credentials not configured"},
+    },
+)
+async def exchange_instagram_code(
+    request: OAuthCodeRequest,
+    current_user: UserDocument = Depends(get_current_active_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> InstagramConnectResponse:
+    """
+    Fully automatic Instagram account connection.
+
+    Called by the frontend callback page after the user authorises the app
+    on Facebook. This single endpoint does everything:
+
+    1.  Exchange the short-lived **authorization code** for a User Access Token
+    2.  Upgrade to a **Long-Lived Token** (60-day expiry)
+    3.  Auto-discover the user's **Facebook Page ID** via /me/accounts
+    4.  Auto-discover the linked **Instagram Business Account ID**
+    5.  Fetch the **Instagram username** for display
+    6.  Persist everything to MongoDB
+
+    The user never has to look up or paste any IDs manually.
+    """
+    import asyncio
+
+    if not settings.META_APP_ID or not settings.META_APP_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="META_APP_ID and META_APP_SECRET must be set in .env",
+        )
+
+    loop = asyncio.get_event_loop()
+    user_id = str(current_user.id)
+
+    # ── Step 1: Exchange authorization code for short-lived token ────────
+    try:
+        token_data = await loop.run_in_executor(
+            None,
+            lambda: InstagramService.exchange_code_for_token_sync(
+                code=request.code,
+                redirect_uri=settings.META_REDIRECT_URI,
+                app_id=settings.META_APP_ID,
+                app_secret=settings.META_APP_SECRET,
+            ),
+        )
+        short_lived_token = token_data["access_token"]
+        logger.info(f"[OAuth] Short-lived token obtained for user {user_id}")
+    except InstagramAPIError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Authorization code exchange failed: {str(e)}",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Could not reach Meta Graph API: {str(e)[:120]}",
+        )
+
+    # ── Step 2: Upgrade to long-lived token (60-day expiry) ──────────────
+    try:
+        ll_data = await loop.run_in_executor(
+            None,
+            lambda: InstagramService.exchange_for_long_lived_token_sync(
+                short_lived_token=short_lived_token,
+                app_id=settings.META_APP_ID,
+                app_secret=settings.META_APP_SECRET,
+            ),
+        )
+        long_lived_token = ll_data["access_token"]
+        logger.info(f"[OAuth] Long-lived token obtained for user {user_id}")
+    except InstagramAPIError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Long-lived token exchange failed: {str(e)}",
+        )
+
+    # ── Step 3 & 4: Auto-discover Facebook Page + Instagram Business Account ─
+    try:
+        account = await loop.run_in_executor(
+            None,
+            lambda: InstagramService.auto_discover_instagram_account_sync(long_lived_token),
+        )
+    except InstagramAPIError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to discover Instagram account: {str(e)}",
+        )
+
+    if not account:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "No Instagram Business or Creator Account found on your Facebook Pages. "
+                "Please make sure your Instagram account is set to Business or Creator "
+                "and is linked to a Facebook Page you manage."
+            ),
+        )
+
+    # ── Step 5: Fetch Instagram username for display ─────────────────────
+    instagram_username = await loop.run_in_executor(
+        None,
+        lambda: InstagramService.get_instagram_username_sync(
+            account["instagram_business_id"],
+            long_lived_token,
+        ),
+    )
+
+    # ── Step 6: Persist to MongoDB ───────────────────────────────────────
+    now = datetime.now(timezone.utc)
+    from bson import ObjectId
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {
+            "$set": {
+                "instagram_connected": True,
+                "instagram_access_token": long_lived_token,
+                "facebook_page_id": account["facebook_page_id"],
+                "instagram_business_id": account["instagram_business_id"],
+                "token_created_at": now,
+                "updated_at": now,
+            }
+        },
+    )
+    logger.info(
+        f"[OAuth] ✅ Instagram auto-connected for user {user_id} → "
+        f"Page: {account['facebook_page_id']}, IG: {account['instagram_business_id']}"
+    )
+
+    return InstagramConnectResponse(
+        success=True,
+        message=(
+            f"Instagram Business Account connected automatically! "
+            f"Page: {account.get('page_name', account['facebook_page_id'])} → "
+            f"@{instagram_username or 'unknown'}"
+        ),
+        instagram_business_id=account["instagram_business_id"],
+        facebook_page_id=account["facebook_page_id"],
+        instagram_username=instagram_username,
+        token_created_at=now,
+    )
 
 
 # ---------------------------------------------------------------------------
