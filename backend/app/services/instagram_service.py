@@ -137,6 +137,141 @@ class InstagramService:
         return data.get("data", [])
 
     # ------------------------------------------------------------------
+    # Full OAuth flow helpers (used by POST /oauth/instagram/exchange-code)
+    # ------------------------------------------------------------------
+    @staticmethod
+    def exchange_code_for_token_sync(
+        code: str,
+        redirect_uri: str,
+        app_id: str,
+        app_secret: str,
+    ) -> dict:
+        """
+        Exchange an OAuth authorization code for a short-lived User Access Token.
+
+        Args:
+            code:         The `code` query param received at the callback URL.
+            redirect_uri: Must exactly match the redirect_uri used to start the OAuth flow.
+            app_id:       Meta App ID.
+            app_secret:   Meta App Secret.
+
+        Returns:
+            {"access_token": "...", "token_type": "bearer"}
+
+        Raises:
+            InstagramAPIError on failure.
+        """
+        response = httpx.get(
+            f"{GRAPH_API_BASE}/oauth/access_token",
+            params={
+                "client_id": app_id,
+                "redirect_uri": redirect_uri,
+                "client_secret": app_secret,
+                "code": code,
+            },
+            timeout=15.0,
+        )
+        data = response.json()
+        if "error" in data:
+            raise InstagramAPIError(
+                f"Code exchange failed: {data['error'].get('message', 'Unknown error')}",
+                code=data["error"].get("code"),
+            )
+        if "access_token" not in data:
+            raise InstagramAPIError("Meta did not return an access_token in code exchange response.")
+        return data
+
+    @staticmethod
+    def exchange_for_long_lived_token_sync(
+        short_lived_token: str,
+        app_id: str,
+        app_secret: str,
+    ) -> dict:
+        """
+        Exchange a short-lived User Access Token (1-hour) for a long-lived token (60 days).
+
+        Returns:
+            {"access_token": "...", "token_type": "bearer", "expires_in": <seconds>}
+
+        Raises:
+            InstagramAPIError on failure.
+        """
+        response = httpx.get(
+            f"{GRAPH_API_BASE}/oauth/access_token",
+            params={
+                "grant_type": "fb_exchange_token",
+                "client_id": app_id,
+                "client_secret": app_secret,
+                "fb_exchange_token": short_lived_token,
+            },
+            timeout=15.0,
+        )
+        data = response.json()
+        if "error" in data:
+            raise InstagramAPIError(
+                f"Long-lived token exchange failed: {data['error'].get('message', 'Unknown error')}",
+                code=data["error"].get("code"),
+            )
+        if "access_token" not in data:
+            raise InstagramAPIError("Meta did not return an access_token in long-lived token exchange response.")
+        return data
+
+    @staticmethod
+    def auto_discover_instagram_account_sync(access_token: str) -> Optional[dict]:
+        """
+        Automatically discover the user's Instagram Business/Creator Account
+        by scanning all Facebook Pages they manage.
+
+        The flow:
+            1. GET /me/accounts?fields=id,name,instagram_business_account
+            2. Iterate pages — pick the first one that has instagram_business_account.id
+
+        Returns:
+            {
+                "facebook_page_id": "...",
+                "instagram_business_id": "...",
+                "page_name": "...",
+            }
+            or None if no Instagram Business Account is linked to any page.
+
+        Raises:
+            InstagramAPIError if the pages request itself fails.
+        """
+        response = httpx.get(
+            f"{GRAPH_API_BASE}/me/accounts",
+            params={
+                "access_token": access_token,
+                "fields": "id,name,instagram_business_account",
+            },
+            timeout=15.0,
+        )
+        data = response.json()
+        if "error" in data:
+            raise InstagramAPIError(
+                f"Failed to fetch Facebook Pages: {data['error'].get('message', 'Unknown error')}",
+                code=data["error"].get("code"),
+            )
+
+        pages = data.get("data", [])
+        logger.info(f"[OAuth] Found {len(pages)} Facebook Page(s) for this account.")
+
+        for page in pages:
+            ig_account = page.get("instagram_business_account")
+            if ig_account and ig_account.get("id"):
+                logger.info(
+                    f"[OAuth] Instagram Business Account discovered: "
+                    f"Page '{page.get('name')}' → IG ID: {ig_account['id']}"
+                )
+                return {
+                    "facebook_page_id": page["id"],
+                    "instagram_business_id": ig_account["id"],
+                    "page_name": page.get("name", ""),
+                }
+
+        logger.warning("[OAuth] No Instagram Business Account found on any managed Facebook Page.")
+        return None
+
+    # ------------------------------------------------------------------
     # Media Container (Step 1 of Instagram publish flow)
     # ------------------------------------------------------------------
     @staticmethod

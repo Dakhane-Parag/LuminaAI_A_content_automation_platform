@@ -16,7 +16,7 @@ export const postsApi = {
 }
 
 export const aiApi = {
-  generatePost: (data) => api.post('/ai/generate-post', data),
+  generatePost: (data) => api.post('/ai/generate-posts', data),
 }
 
 export const imageApi = {
@@ -25,7 +25,7 @@ export const imageApi = {
 
 export const scheduleApi = {
   schedulePost: (postId, data) => api.post(`/schedule/schedule-post/${postId}`, data),
-  getScheduled: () => api.get('/schedule/scheduled-posts'),
+  getScheduled: (params) => api.get('/schedule/my-schedules', { params }),
   cancelSchedule: (scheduleId) => api.delete(`/schedule/cancel/${scheduleId}`),
 }
 
@@ -34,7 +34,7 @@ export const analyticsApi = {
   getPostStats: (params) => api.get('/analytics/posts', { params }),
   getGenerations: (params) => api.get('/analytics/generations', { params }),
   getPublishing: (params) => api.get('/analytics/publishing', { params }),
-  getWorkers: () => api.get('/analytics/workers'),
+  getWorkers: (params) => api.get('/analytics/workers', { params }),
   getActivity: (params) => api.get('/analytics/activity', { params }),
 }
 

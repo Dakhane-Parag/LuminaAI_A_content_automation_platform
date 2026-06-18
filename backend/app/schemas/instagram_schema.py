@@ -58,6 +58,20 @@ class OAuthCallbackParams(BaseModel):
     error_description: Optional[str] = None
 
 
+class OAuthCodeRequest(BaseModel):
+    """
+    Request body for POST /oauth/instagram/exchange-code.
+    The frontend callback page sends the authorization code received from Meta.
+    The backend then exchanges it, auto-discovers the Instagram Business Account,
+    and stores everything — no manual ID entry required.
+    """
+    code: str = Field(
+        ...,
+        description="Authorization code received from Meta OAuth redirect",
+        min_length=1,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Manual Token Connect Schema (for non-OAuth direct token entry)
 # ---------------------------------------------------------------------------
