@@ -40,6 +40,10 @@
     padding: 0;
   }
 
+  button, a {
+    cursor: pointer;
+  }
+
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;

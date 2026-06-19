@@ -88,6 +88,7 @@ async def get_instagram_connect_url(
         "client_id": settings.META_APP_ID,
         "redirect_uri": settings.META_REDIRECT_URI,
         "scope": (
+            "business_management,"
             "instagram_basic,"
             "instagram_content_publish,"
             "pages_manage_metadata,"
@@ -95,6 +96,7 @@ async def get_instagram_connect_url(
             "pages_show_list"
         ),
         "response_type": "code",
+        "auth_type": "rerequest",
         "state": str(current_user.id),  # passed through for traceability
     }
     auth_url = "https://www.facebook.com/v21.0/dialog/oauth?" + urlencode(params)

@@ -11,6 +11,9 @@ import DashboardPage from './pages/DashboardPage'
 import CreatePostPage from './pages/CreatePostPage'
 import SchedulingPage from './pages/SchedulingPage'
 import ContentManagerPage from './pages/ContentManagerPage'
+import SettingsPage from './pages/SettingsPage'
+import InstagramCallbackPage from './pages/InstagramCallbackPage'
+import HelpPage from './pages/HelpPage'
 
 // Placeholder for pages coming soon — uses real AppLayout so sidebar already works
 function ComingSoon({ page }) {
@@ -37,6 +40,7 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/auth/instagram/callback" element={<InstagramCallbackPage />} />
 
           {/* Protected app routes */}
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
@@ -45,8 +49,8 @@ export default function App() {
           <Route path="/schedule"  element={<ProtectedRoute><SchedulingPage /></ProtectedRoute>} />
           <Route path="/analytics" element={<ProtectedRoute><ComingSoon page="Analytics" /></ProtectedRoute>} />
           <Route path="/health"    element={<ProtectedRoute><ComingSoon page="System Logs" /></ProtectedRoute>} />
-          <Route path="/settings"  element={<ProtectedRoute><ComingSoon page="Settings" /></ProtectedRoute>} />
-          <Route path="/help"      element={<ProtectedRoute><ComingSoon page="Help" /></ProtectedRoute>} />
+          <Route path="/settings"  element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/help"      element={<ProtectedRoute><HelpPage /></ProtectedRoute>} />
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />

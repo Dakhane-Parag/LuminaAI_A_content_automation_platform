@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
+import heroBg from '../assets/hero.png'
 
 // ── Reusable SVG Icons ────────────────────────────────────────────────────────
 const LightbulbIcon = () => (
@@ -64,6 +66,7 @@ const FEATURES = [
 
 // ── LandingPage Component ─────────────────────────────────────────────────────
 export default function LandingPage() {
+  const { user } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -91,22 +94,33 @@ export default function LandingPage() {
       >
         <nav className="flex justify-between items-center h-16 px-6 md:px-16 max-w-[1280px] mx-auto w-full">
           {/* Logo */}
-          <div className="text-xl font-bold tracking-tighter text-white">BrandFlow AI</div>
+          <Link to="/" className="text-xl font-bold tracking-tighter text-white hover:opacity-80 transition-opacity">BrandFlow AI</Link>
 
           {/* Desktop nav */}
 
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/login" className="text-xs uppercase font-semibold tracking-wider text-white hover:underline transition-all">
-              Login
-            </Link>
-            <Link
-              to="/register"
-              className="text-xs uppercase font-semibold tracking-widest bg-[#EF4444] text-white px-6 py-2 transition-all active:scale-95 hover:bg-[#ff5d5a]"
-            >
-              Get Started
-            </Link>
+            {user ? (
+              <Link
+                to="/dashboard"
+                className="text-xs uppercase font-semibold tracking-widest bg-[#EF4444] text-white px-6 py-2 transition-all active:scale-95 hover:bg-[#ff5d5a]"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" className="text-xs uppercase font-semibold tracking-wider text-white hover:underline transition-all">
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="text-xs uppercase font-semibold tracking-widest bg-[#EF4444] text-white px-6 py-2 transition-all active:scale-95 hover:bg-[#ff5d5a]"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile hamburger */}
@@ -128,8 +142,14 @@ export default function LandingPage() {
               </a>
             ))}
             <div className="flex flex-col gap-3 pt-4 border-t" style={{ borderColor: 'rgba(91,64,62,0.5)' }}>
-              <Link to="/login" className="text-xs uppercase font-semibold tracking-wider text-white text-center border border-white/10 py-2">Login</Link>
-              <Link to="/register" className="text-xs uppercase font-semibold tracking-widest bg-[#EF4444] text-white text-center py-3">Get Started</Link>
+              {user ? (
+                <Link to="/dashboard" className="text-xs uppercase font-semibold tracking-widest bg-[#EF4444] text-white text-center py-3">Dashboard</Link>
+              ) : (
+                <>
+                  <Link to="/login" className="text-xs uppercase font-semibold tracking-wider text-white text-center border border-white/10 py-2">Login</Link>
+                  <Link to="/register" className="text-xs uppercase font-semibold tracking-widest bg-[#EF4444] text-white text-center py-3">Get Started</Link>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -141,10 +161,12 @@ export default function LandingPage() {
           {/* Background grid image */}
           <div className="absolute inset-0 pointer-events-none z-0">
             <img
-              alt="Technical Grid Background"
-              className="w-full h-full object-cover opacity-[0.08]"
-              src="https://lh3.googleusercontent.com/aida/ADBb0ujA4dG_-kW2wrGF5Kz9xPVDC9osCwyXz6SNTgr4fofimi7NVoxmSFlNjesRXlYuD14QCWu90teonuGTp25NSvOihFTVnJYhOSTiMC8JSHTxlQpLJb6jSfjP4-d3hkoHxXSHDLnjjmTqyAIjdXt8CEg0cRvadkOu_YXxKgkAZxfiBJ6FkVsXnnP8y3VxMTEHyaQm2W5BfTytzETGeNZlrB5CrEoY0wlmhWbuEp16bnOnF6RVA6JgJxbPww"
+              alt="BrandFlow Hero Background"
+              className="w-full h-full object-cover opacity-20 mix-blend-screen"
+              src={heroBg}
             />
+            {/* Overlay gradient to ensure text readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/60 via-transparent to-[#050505]" />
           </div>
 
           <div className="max-w-7xl mx-auto relative z-10">
@@ -159,10 +181,10 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
-                  to="/register"
+                  to={user ? "/dashboard" : "/register"}
                   className="inline-block bg-[#EF4444] text-white px-8 py-4 text-xs uppercase font-semibold tracking-widest text-center hover:bg-[#ff5d5a] transition-colors active:scale-95"
                 >
-                  Start Engineering
+                  {user ? "Go to Dashboard" : "Start Engineering"}
                 </Link>
                 <a
                   href="#features"
@@ -342,13 +364,15 @@ export default function LandingPage() {
               <blockquote className="text-xl md:text-2xl font-medium italic mb-8 leading-relaxed">
                 "The transition to BrandFlow AI reduced our operational overhead by 64% while tripling our output velocity. It is no longer just a tool; it is our brand's operating system."
               </blockquote>
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-12 h-12 bg-[#050505]" />
-                <div>
-                  <div className="text-xs uppercase font-bold tracking-widest">Marcus V. Sterling</div>
-                  <div className="text-xs uppercase tracking-widest opacity-60">Director of Digital Engineering</div>
+              <a href="https://paragfolio.in" className="flex flex-col items-center gap-3 group cursor-pointer hover:-translate-y-1 transition-all duration-300">
+                <div className="w-12 h-12 bg-[#050505] rounded-full group-hover:shadow-[0_0_20px_rgba(5,5,5,0.2)] transition-shadow flex items-center justify-center text-white overflow-hidden">
+                  <span className="text-xs font-bold text-white/50">PD</span>
                 </div>
-              </div>
+                <div>
+                  <div className="text-xs uppercase font-bold tracking-widest group-hover:text-[#EF4444] transition-colors">Mr. Parag Dakhane</div>
+                  <div className="text-xs uppercase tracking-widest opacity-60">Nobody</div>
+                </div>
+              </a>
             </div>
           </div>
         </section>
@@ -363,12 +387,6 @@ export default function LandingPage() {
             >
               Request Access
             </Link>
-            <a
-              href="#"
-              className="border border-[#e5e2e1] text-[#e5e2e1] px-10 py-5 text-xs uppercase font-bold tracking-widest hover:bg-[#e5e2e1] hover:text-[#050505] transition-all active:scale-95"
-            >
-              Book Demo
-            </a>
           </div>
           <p className="mt-8 text-xs uppercase font-bold tracking-widest text-[#e5e2e1]/40">
             Limited enterprise nodes available for Q4.

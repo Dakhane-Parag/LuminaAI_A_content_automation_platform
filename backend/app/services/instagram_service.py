@@ -253,6 +253,7 @@ class InstagramService:
             )
 
         pages = data.get("data", [])
+        logger.info(f"[OAuth] Raw /me/accounts response: {data}")
         logger.info(f"[OAuth] Found {len(pages)} Facebook Page(s) for this account.")
 
         for page in pages:
