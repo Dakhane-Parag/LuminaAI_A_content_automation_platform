@@ -46,3 +46,6 @@ boto3==1.38.18
 celery==5.4.0
 redis==5.2.1
 kombu==5.4.2
+
+# Production Server
+gunicorn==22.0.0

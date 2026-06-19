@@ -1,8 +1,11 @@
 import axios from 'axios'
 
 // ─── Base API client ──────────────────────────────────────────────────────────
+// In development: VITE_API_BASE_URL is not set, so falls back to '/api/v1'
+// which is proxied to localhost:8000 by vite.config.js.
+// In production: VITE_API_BASE_URL = 'http://<ec2-ip>/api/v1' (set in Vercel env vars)
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },

@@ -1,0 +1,25 @@
+[Unit]
+Description=BrandFlow AI — FastAPI Backend (Gunicorn)
+After=network.target
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/app/backend
+EnvironmentFile=/home/ubuntu/app/backend/.env
+ExecStart=/home/ubuntu/app/backend/venv/bin/gunicorn \
+    app.main:app \
+    -w 2 \
+    -k uvicorn.workers.UvicornWorker \
+    --bind 127.0.0.1:8000 \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level info
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=5
+
+[Install]
+WantedBy=multi-user.target

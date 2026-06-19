@@ -25,6 +25,7 @@ Monitoring (optional — install flower first):
 """
 
 import os
+import ssl
 from dotenv import load_dotenv
 
 # Load environment variables before Celery initializes
@@ -37,11 +38,18 @@ from kombu import Queue
 # ---------------------------------------------------------------------------
 # Redis broker URL
 # ---------------------------------------------------------------------------
-# Read from environment — falls back to local Redis defaults
-_REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-_REDIS_PORT = os.getenv("REDIS_PORT", "6379")
-_REDIS_DB   = os.getenv("REDIS_DB", "0")
-REDIS_URL   = f"redis://{_REDIS_HOST}:{_REDIS_PORT}/{_REDIS_DB}"
+# REDIS_URL env var takes priority (Upstash uses rediss:// with TLS).
+# Falls back to constructing from host/port for local Redis.
+_REDIS_URL_ENV = os.getenv("REDIS_URL", "")
+_REDIS_HOST    = os.getenv("REDIS_HOST", "localhost")
+_REDIS_PORT    = os.getenv("REDIS_PORT", "6379")
+_REDIS_DB      = os.getenv("REDIS_DB", "0")
+
+REDIS_URL = _REDIS_URL_ENV if _REDIS_URL_ENV else f"redis://{_REDIS_HOST}:{_REDIS_PORT}/{_REDIS_DB}"
+
+# Detect if TLS is required (Upstash rediss://)
+_USE_SSL = REDIS_URL.startswith("rediss://")
+_SSL_OPTS = {"ssl_cert_reqs": ssl.CERT_NONE} if _USE_SSL else None
 
 # ---------------------------------------------------------------------------
 # Celery application
@@ -92,5 +100,12 @@ celery_app.conf.update(
     broker_connection_retry_on_startup=True,
 )
 
+# Apply SSL settings if using Upstash / rediss://
+if _SSL_OPTS:
+    celery_app.conf.update(
+        broker_use_ssl=_SSL_OPTS,
+        redis_backend_use_ssl=_SSL_OPTS,
+    )
+
 logger = get_task_logger(__name__)
-logger.info(f"Celery worker initialised. Broker: redis://{_REDIS_HOST}:{_REDIS_PORT}/{_REDIS_DB}")
+logger.info(f"Celery worker initialised. Broker: {REDIS_URL.split('@')[-1] if '@' in REDIS_URL else REDIS_URL}")

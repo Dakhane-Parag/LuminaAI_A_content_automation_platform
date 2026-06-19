@@ -1,0 +1,21 @@
+[Unit]
+Description=BrandFlow AI — Celery Worker (Background Task Processor)
+After=network.target brandflow-api.service
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/app/backend
+EnvironmentFile=/home/ubuntu/app/backend/.env
+ExecStart=/home/ubuntu/app/backend/venv/bin/celery \
+    -A workers.celery_worker worker \
+    --loglevel=info \
+    --logfile=/home/ubuntu/app/backend/celery.log \
+    -P solo
+Restart=always
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target
